@@ -47,4 +47,8 @@ dependencies {
 	compile("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
 	runtime('org.springframework.boot:spring-boot-devtools')
 	testCompile('org.springframework.boot:spring-boot-starter-test')
+	compile group: 'org.apache.poi', name: 'poi', version: '3.17'
+	compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
+	compile group: 'com.sun.jersey.contribs', name: 'jersey-multipart', version: '1.9.1'
+	compile group: 'javax.mail', name: 'mail', version: '1.4.1'
 }
