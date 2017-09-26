@@ -1,6 +1,5 @@
 package com.zcj.kotlin.ddu.controller
 
-import ch.qos.logback.core.net.LoginAuthenticator
 import com.zcj.kotlin.ddu.domain.Email
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.springframework.stereotype.Controller
@@ -11,12 +10,14 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.servlet.ModelAndView
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.activation.DataHandler
 import javax.activation.FileDataSource
-import javax.mail.*
+import javax.mail.BodyPart
+import javax.mail.Message
 import javax.mail.Session.getDefaultInstance
 import javax.mail.internet.*
 import javax.servlet.http.HttpServletRequest
@@ -39,8 +40,8 @@ class EmailController {
             email.remarks = request.getParameter("email.remarks")
             email.todayReport = request.getParameter("email.todayReport")
             email.tomorrowReport = request.getParameter("email.tomorrowReport")
-            createExcel(email)
-            sendEmail()
+//            createExcel(email)
+            sendEmail(email)
         } catch (e: Exception) {
             e.printStackTrace()
             model.set("msg", "发送失败")
@@ -50,12 +51,45 @@ class EmailController {
         return ModelAndView("sucess")
     }
 
-    private fun sendEmail() {
+    private fun sendEmail(email: Email) {
         val subject = getSubject()
         val sendHtml = getHtml()
         val receiveUserList = getReceiveUserList()
-        val file = File("D://email.xlsx")
+        val fileSign = copyFile(File("D://report//templateEmail.xlsx"), File("D://report"), getEmailName())
+        val file = File("D://report//" + getEmailName())
+        if (!fileSign) {
+            return
+        }
+        if (file.exists()) {
+            execuFile(email, file)
+        }
         doSendHtmlEmail(subject, sendHtml, receiveUserList, file)
+    }
+
+    private fun execuFile(email: Email, file: File) {
+        val fileIn = FileInputStream(file)
+        val wb = XSSFWorkbook(fileIn)
+        val sheet = wb.getSheetAt(0)
+        // 时间
+        val row = sheet.getRow(2) //行
+        val cellDate = row.getCell(0)
+        cellDate.setCellValue(Date())
+        // 今日工作
+        val cellToday = row.getCell(2)
+        cellToday.setCellValue(email.todayReport)
+        // 明日工作
+        val rowTomorrow = sheet.getRow(4)
+        val cellTomorrow = rowTomorrow.getCell(2)
+        cellTomorrow.setCellValue(email.tomorrowReport)
+        // 备注
+        val rowRemarks = sheet.getRow(6)
+        val cellRemarks = rowRemarks.getCell(2)
+        cellRemarks.setCellValue(email.remarks)
+
+        val fileOut = FileOutputStream(file)
+        wb.write(fileOut)
+        fileOut.flush()
+        fileOut.close()
     }
 
     private fun doSendHtmlEmail(subject: String?, sendHtml: String?, receiveUserList: List<String>, file: File) = try {
@@ -63,21 +97,19 @@ class EmailController {
         val properties = Properties()
         properties.put("mail.smtp.host", "smtp.qgutech.com")
         properties.put("mail.smtp.port", "25")
-        properties.put("mail.smtp.user","zhacongjie@qgutech.com")
-        properties.put("mail.smtp.auth","true")
-        properties.put("mail.smtp.debug","true")
-//            todo
-//        val auth = Authenticator()
+        properties.put("mail.smtp.user", "zhacongjie@qgutech.com")
+        properties.put("mail.smtp.auth", "true")
+        properties.put("mail.smtp.debug", "true")
         val session = getDefaultInstance(properties, null)
         session.debug = true
         val message = MimeMessage(session)
         message.setFrom(InternetAddress("zhacongjie@qgutech.com"))
         val address = arrayOfNulls<InternetAddress>(receiveUserList.size)
-        for (ex in receiveUserList.indices){
+        for (ex in receiveUserList.indices) {
             val exAddress = InternetAddress(receiveUserList[ex])
             address[ex] = exAddress
         }
-        message.setRecipients(Message.RecipientType.TO,address)
+        message.setRecipients(Message.RecipientType.TO, address)
         message.subject = subject
         message.sentDate = Date()
         val messagePart: BodyPart = MimeBodyPart()
@@ -92,11 +124,10 @@ class EmailController {
         message.setContent(multiPart)
         message.saveChanges()
         val transport = session.getTransport("smtp")
-        transport.connect(properties.get("mail.smtp.host").toString(),25,"zhacongjie@qgutech.com","qgutech.123")
-        transport.sendMessage(message,message.allRecipients)
+        transport.connect(properties.get("mail.smtp.host").toString(), 25, "zhacongjie@qgutech.com", "qgutech.123")
+        transport.sendMessage(message, message.allRecipients)
         transport.close()
     } finally {
-//            transport.close();
     }
 
     private fun getReceiveUserList(): List<String> {
@@ -122,35 +153,37 @@ class EmailController {
                 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \n"
     }
 
-    private fun createExcel(email: Email) {
-        val wb = XSSFWorkbook()
-        val sheet = wb.createSheet("sheet1")
-        for (i in 1..5) {
-            val row = sheet.createRow(i)
-            for (j in 5..10) {
-                val cell = row.createCell(j)
-                cell.setCellValue("Cell" + i + " " + j)
-            }
-        }
-//            val fileOut = FileOutputStream(System.getProperty("user.dir") + "/src/main/resources/download/email.xlsx")
-        val fileOut = FileOutputStream("D://email.xlsx")
-        wb.write(fileOut)
-        fileOut.flush()
-        fileOut.close()
-    }
 
     private fun getEmailName(): String? {
-        val date = Date()
-        val sdf = SimpleDateFormat("ELP日报【查从杰】-17MMDD-.xlsx");
-        return sdf.format(date)
+        return getSubject() + "-.xlsx"
     }
 
     private fun getSubject(): String? {
         val date = Date()
-        val sdf = SimpleDateFormat("MMDD");
-        return "ELP日报【查从杰】-17"+sdf.format(date)
+        val sdf = SimpleDateFormat("MMdd");
+        return "ELP日报【查从杰】-17" + sdf.format(date)
+    }
+
+    private fun copyFile(srcFile: File?, destDir: File?, newFileName: String?): Boolean {
+        if (!destDir?.exists()!!) {
+            destDir.createNewFile()
+        }
+
+        if (srcFile == null || !srcFile.exists()) {
+            println("源文件不存在")
+            return false
+        }
+        val fcin = FileInputStream(srcFile).channel
+        val fcout = FileOutputStream(File(destDir, newFileName)).channel
+        fcin.transferTo(0, fcin.size(), fcout)
+        fcin.close()
+        fcout.close()
+        return true
     }
 }
+
+
+
 
 
 
