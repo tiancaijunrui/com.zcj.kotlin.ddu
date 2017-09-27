@@ -2,6 +2,8 @@ package com.zcj.kotlin.ddu.controller
 
 import com.zcj.kotlin.ddu.domain.Email
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.env.Environment
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.ui.set
@@ -18,15 +20,20 @@ import javax.activation.DataHandler
 import javax.activation.FileDataSource
 import javax.mail.BodyPart
 import javax.mail.Message
+import javax.mail.Message.RecipientType.CC
 import javax.mail.Session.getDefaultInstance
 import javax.mail.internet.*
 import javax.servlet.http.HttpServletRequest
+
 
 /**
  * @Since2017/9/20 ZhaCongJie@HF
  */
 @Controller
 class EmailController {
+    @Autowired
+    private val env: Environment? = null
+
     @GetMapping("email/index")
     @ResponseBody
     fun index(): ModelAndView {
@@ -40,7 +47,6 @@ class EmailController {
             email.remarks = request.getParameter("email.remarks")
             email.todayReport = request.getParameter("email.todayReport")
             email.tomorrowReport = request.getParameter("email.tomorrowReport")
-//            createExcel(email)
             sendEmail(email)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -52,6 +58,7 @@ class EmailController {
     }
 
     private fun sendEmail(email: Email) {
+        println(env?.getProperty("mail.smtp.port"))
         val subject = getSubject()
         val sendHtml = getHtml()
         val receiveUserList = getReceiveUserList()
@@ -93,13 +100,12 @@ class EmailController {
     }
 
     private fun doSendHtmlEmail(subject: String?, sendHtml: String?, receiveUserList: List<String>, file: File) = try {
-        val sendUserName = InternetAddress("zhacongjie")
         val properties = Properties()
-        properties.put("mail.smtp.host", "smtp.qgutech.com")
-        properties.put("mail.smtp.port", "25")
-        properties.put("mail.smtp.user", "zhacongjie@qgutech.com")
-        properties.put("mail.smtp.auth", "true")
-        properties.put("mail.smtp.debug", "true")
+        properties.put("mail.smtp.host", env?.getProperty("mail.smtp.host"))
+        properties.put("mail.smtp.port", env?.getProperty("mail.smtp.port"))
+        properties.put("mail.smtp.user", env?.getProperty("mail.smtp.user"))
+        properties.put("mail.smtp.auth", env?.getProperty("mail.smtp.auth"))
+        properties.put("mail.smtp.debug", env?.getProperty("mail.smtp.debug"))
         val session = getDefaultInstance(properties, null)
         session.debug = true
         val message = MimeMessage(session)
@@ -109,7 +115,14 @@ class EmailController {
             val exAddress = InternetAddress(receiveUserList[ex])
             address[ex] = exAddress
         }
+        val CCList = env?.getProperty("email.CC.address")?.split(",")!!
+        val CCAddress = arrayOfNulls<InternetAddress>(CCList.size)
+        for (ex in CCList.indices){
+            val exAddress = InternetAddress(CCList[ex])
+            CCAddress[ex] = exAddress
+        }
         message.setRecipients(Message.RecipientType.TO, address)
+        message.setRecipients(Message.RecipientType.CC, CCAddress)
         message.subject = subject
         message.sentDate = Date()
         val messagePart: BodyPart = MimeBodyPart()
@@ -131,10 +144,12 @@ class EmailController {
     }
 
     private fun getReceiveUserList(): List<String> {
-        val list = ArrayList<String>()
-//        list.add("zhacongjie@qgutech.com")
-        list.add("984453536@qq.com")
-        return list
+        val list = env?.getProperty("email.receive.address")?.split(",")
+        return list!!;
+    }
+    private fun getCCUserList():List<String>{
+        val list = env?.getProperty("email.CC.address")?.split(",")
+        return list!!;
     }
 
     private fun getHtml(): String? {
