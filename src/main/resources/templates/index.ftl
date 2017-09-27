@@ -32,7 +32,10 @@
         <label for="remarks">备注：</label>
         <textarea class="form-control" id="remarks" placeholder="备注"  name="email.remarks"></textarea>
     </div>
-    <button type="submit" class="btn btn-default">确定</button>
+    <div class="btn-variants">
+        <button type="submit" class="btn btn-primary">确定</button>
+        <button type="reset" class="btn btn-info">重置</button>
+    </div>
 </form>
 </body>
 </html>
