@@ -80,7 +80,8 @@ class EmailController {
         // 时间
         val row = sheet.getRow(2) //行
         val cellDate = row.getCell(0)
-        cellDate.setCellValue(Date())
+        val sdf = SimpleDateFormat("yyyy年MM月dd日")
+        cellDate.setCellValue(sdf.format(Date()))
         // 今日工作
         val cellToday = row.getCell(2)
         cellToday.setCellValue(email.todayReport)
