@@ -13,7 +13,8 @@
     <header>
         <h1>Simple example</h1>
     </header>
-    <div id="test-editormd"><textarea style="display:none;"></textarea>
+    <div id="test-editormd"><textarea style="display:none;">
+    </textarea>
     </div>
 </div>
 <script src="${staticPerfix!}/examples/js/jquery.min.js"></script>
