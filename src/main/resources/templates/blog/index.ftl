@@ -1,45 +1,62 @@
-<#assign staticPerfix = "/editor.md-master"/>
-<!DOCTYPE html>
-<html lang="zh">
+<html>
 <head>
-    <meta charset="utf-8" />
-    <title>Simple example - Editor.md examples</title>
-    <link rel="stylesheet" href="${staticPerfix!}/examples/css/style.css" />
-    <link rel="stylesheet" href="${staticPerfix!}/css/editormd.css" />
-    <link rel="shortcut icon" href="https://pandao.github.io/editor.md/favicon.ico" type="image/x-icon" />
+<#include "../static.ftl" />
+    <style type="text/css">
+        .form-group textarea {
+            width: 600px;
+            height: 120px;
+        }
+
+        form {
+            margin-left: 100px;
+        }
+    </style>
 </head>
 <body>
-<div id="layout">
-    <header>
-        <h1>Simple example</h1>
-    </header>
-    <div id="test-editormd"><textarea style="display:none;">
-    </textarea>
-    </div>
+<div class="page-header">
+    <h1>君睿的牛逼之路
+        <small>我的博客~~~</small>
+    </h1>
 </div>
-<script src="${staticPerfix!}/examples/js/jquery.min.js"></script>
-<script src="${staticPerfix!}/editormd.min.js"></script>
-<script type="text/javascript">
-    var testEditor;
+<table class="table table-hover">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>文件名称</th>
+        <th>操作</th>
+    </tr>
+    </thead>
+    <tbody>
+    <#if blog?? && (blog.fileNameList)??>
+        <#list blog.fileNameList as fileName>
+        <tr>
+            <th scope="row">${(fileName_index+1)}</th>
+            <td>${fileName!}</td>
+            <td>
+                <button class="btn btn-default btn-sm" onclick="deleteFileName('${fileName!}')">删除</button>
+                <button class="btn btn-default btn-sm" onclick="editFileName('${fileName!}')">编辑</button>
+            </td>
+        </tr>
+        </#list>
+    <#else>
+    暂无数据~~
+    </#if>
+    </tbody>
+</table>
+<script>
+//    $(function () {
+////        alert(1)
+//    });
 
-    $(function() {
-        testEditor = editormd("test-editormd", {
-            width   : "90%",
-            height  : 640,
-            syncScrolling : "single",
-            path    : "${staticPerfix!}/lib/"
-        });
+    function editFileName(fileName) {
+        if (fileName) {
+            location.href = "/blog/editFileName/"+fileName;
+        }
+    }
 
-        /*
-        // or
-        testEditor = editormd({
-            id      : "test-editormd",
-            width   : "90%",
-            height  : 640,
-            path    : "../lib/"
-        });
-        */
-    });
+    function deleteFileName(fileName) {
+
+    }
 </script>
 </body>
 </html>
