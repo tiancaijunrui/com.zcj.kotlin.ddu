@@ -11,10 +11,7 @@ import org.springframework.ui.Model
 import org.springframework.ui.set
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.ModelAndView
-import java.io.BufferedReader
-import java.io.File
-import java.io.FileInputStream
-import java.io.InputStreamReader
+import java.io.*
 import javax.annotation.Resource
 import javax.servlet.http.HttpServletRequest
 
@@ -38,9 +35,7 @@ class BlogController {
     @GetMapping("blog/editFileName/{fileName}")
     @ResponseBody
     fun editFileName(@PathVariable fileName: String, model: Model, request: HttpServletRequest): ModelAndView {
-        val path = env?.getProperty("blog.physical.path") + env?.getProperty("blog.relative.path")
-        val filePath: String = path + "\\" + fileName + ".md"
-        val file: File = File(filePath)
+        val file: File = getFile(fileName)
         val inputStreamReader: InputStreamReader = InputStreamReader(FileInputStream(file))
         val br = BufferedReader(inputStreamReader)
         var line: String? = br.readLine().trim()
@@ -57,9 +52,26 @@ class BlogController {
         return ModelAndView("blog/edit")
     }
 
+    private fun getFile(fileName: String): File {
+        val path = env?.getProperty("blog.physical.path") + env?.getProperty("blog.relative.path")
+        val filePath: String = path + "\\" + fileName + ".md"
+        val file: File = File(filePath)
+        return file
+    }
+
     @PostMapping("blog/save/{fileName}")
     fun save(@PathVariable fileName: String, model: Model, request: HttpServletRequest): JsonResult {
         val jsonResult = JsonResult();
+        val content:String = request.getParameter("content")
+        val file: File = getFile(fileName)
+        val fop :FileOutputStream = FileOutputStream(file)
+        if (!file.exists()){
+            file.createNewFile()
+        }
+//        val byte : Byte[] =
+        fop.write(content.toByteArray())
+        fop.flush()
+        fop.close()
         return jsonResult;
     }
 

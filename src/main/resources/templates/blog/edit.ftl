@@ -36,12 +36,18 @@ ${content!}
             var keyCode = e.keyCode || e.which || e.charCode;
             var ctrlKey = e.ctrlKey || e.metaKey;
             if(ctrlKey && keyCode == 83) {
-                $.post("/blog/save/${fileName!}",{content:$("#test-editormd").find("textarea").val()},function (data) {
-                    debugger;
-                })
+                $.ajax({
+                    url:"/blog/save/${fileName!}",
+                    method:"post",
+                    data:{content:$("#test-editormd").find("textarea").val()},
+                    async:false,
+                    success:function (data) {
+                        debugger;
+                    }
+                });
+                e.preventDefault();
+                return false;
             }
-            e.preventDefault();
-            return false;
         }
 
     });
