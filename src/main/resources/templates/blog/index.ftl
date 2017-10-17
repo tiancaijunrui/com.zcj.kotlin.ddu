@@ -44,9 +44,6 @@
     </tbody>
 </table>
 <script>
-//    $(function () {
-////        alert(1)
-//    });
 
     function editFileName(fileName) {
         if (fileName) {

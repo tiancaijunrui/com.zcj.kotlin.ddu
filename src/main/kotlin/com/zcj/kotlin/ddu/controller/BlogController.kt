@@ -68,10 +68,10 @@ class BlogController {
         if (!file.exists()){
             file.createNewFile()
         }
-//        val byte : Byte[] =
         fop.write(content.toByteArray())
         fop.flush()
         fop.close()
+        jsonResult.status = "SUCCESS";
         return jsonResult;
     }
 
