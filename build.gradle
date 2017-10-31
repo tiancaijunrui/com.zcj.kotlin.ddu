@@ -35,6 +35,7 @@ repositories {
 	mavenCentral()
 	maven { url "https://repo.spring.io/snapshot" }
 	maven { url "https://repo.spring.io/milestone" }
+	maven { url "https://jitpack.io" }
 }
 
 
@@ -51,4 +52,5 @@ dependencies {
 	compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
 	compile group: 'com.sun.jersey.contribs', name: 'jersey-multipart', version: '1.9.1'
 	compile group: 'javax.mail', name: 'mail', version: '1.4.1'
+	compile 'com.github.SilenceDut:jpinyin:v1.0'
 }
